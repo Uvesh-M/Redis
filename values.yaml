@@ -765,11 +765,11 @@ replica:
   ## Example:
   resources:
     requests:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 1
-      memory: 1Gi
+      cpu: 250m
+      memory: 256Mi
 
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
