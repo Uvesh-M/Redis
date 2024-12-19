@@ -8,9 +8,10 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GKE_CLUSTER: ${{ secrets.GKE_CLUSTER }}
-  GKE_ZONE: ${{ secrets.GKE_ZONE }}
+  PROJECT_ID: bo-stage
+  GKE_CLUSTER: better-staging
+  GKE_ZONE: asia-south1
+  VALUE_PATH: values.yaml
   DEPLOYMENT_NAME: redis
   NAMESPACE: redis
 
@@ -18,23 +19,31 @@ jobs:
   deploy:
     name: Deploy to GKE
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Setup Google Cloud CLI
-      uses: google-github-actions/setup-gcloud@v0
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        export_default_credentials: true
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
 
     - name: Get GKE Credentials
-      uses: google-github-actions/get-gke-credentials@v0
+      uses: 'google-github-actions/get-gke-credentials@v1'
       with:
-        cluster_name: ${{ secrets.GKE_CLUSTER }}
-        location: ${{ secrets.GKE_ZONE }}
+        cluster_name: '${{ secrets.GKE_CLUSTER }}'
+        location: '${{ secrets.GKE_ZONE }}'
 
     - name: Install Helm
       uses: azure/setup-helm@v3
@@ -44,6 +53,11 @@ jobs:
     - name: Create Namespace
       run: |
         kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Add Bitnami Helm Repository
+      run: |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
 
     - name: Deploy Redis
       run: |
