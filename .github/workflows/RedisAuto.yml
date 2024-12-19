@@ -76,28 +76,8 @@ jobs:
           --set replica.replicaCount=1 \
           --set auth.enabled=true \
           --set auth.password=${{ secrets.REDIS_PASSWORD }} \
-          --set master.resources.requests.cpu=100m \
-          --set master.resources.requests.memory=256Mi \
-          --set master.resources.limits.cpu=200m \
-          --set master.resources.limits.memory=512Mi \
-          --set replica.resources.requests.cpu=100m \
-          --set replica.resources.requests.memory=256Mi \
-          --set replica.resources.limits.cpu=200m \
-          --set replica.resources.limits.memory=512Mi \
-          --set networkPolicy.enabled=false \
-          --debug \
           --wait --timeout 10m
     - name: Verify Deployment
       run: |
         kubectl get pods -n $NAMESPACE
         kubectl get svc -n $NAMESPACE
-        
-    - name: Debug Info
-      if: failure()
-      run: |
-        echo "Pod Details:"
-        kubectl describe pods -n $NAMESPACE
-        echo "PVC Details:"
-        kubectl describe pvc -n $NAMESPACE
-        echo "Events:"
-        kubectl get events -n $NAMESPACE
