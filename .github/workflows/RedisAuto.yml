@@ -52,6 +52,13 @@ jobs:
         echo "Checking existing pods..."
         kubectl get pods -A
         
+    - name: Check Existing Deployments
+      run: |
+        if helm status $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1; then
+          helm uninstall $DEPLOYMENT_NAME -n $NAMESPACE
+          sleep 10
+        fi
+        
     - name: Install Helm
       uses: azure/setup-helm@v3
       with:
@@ -65,13 +72,7 @@ jobs:
       run: |
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
-
-    - name: Check Existing Deployments
-      run: |
-        if helm status $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1; then
-          helm uninstall $DEPLOYMENT_NAME -n $NAMESPACE
-          sleep 10
-        fi
+        
     - name: Deploy Redis
       run: |
         helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
