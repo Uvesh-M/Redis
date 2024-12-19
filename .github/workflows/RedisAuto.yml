@@ -11,7 +11,6 @@ env:
   PROJECT_ID: bo-stage
   GKE_CLUSTER: better-staging
   GKE_ZONE: asia-south1
-  VALUE_PATH: values.yaml
   DEPLOYMENT_NAME: redis
   NAMESPACE: redis
 
@@ -27,26 +26,22 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Setup Google Cloud CLI
-      uses: google-github-actions/setup-gcloud@v0.2.1
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
+        workload_identity_provider: '${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}'
+        service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
 
-    - name: Install gke-gcloud-auth-plugin
-      run: |
-        gcloud components install gke-gcloud-auth-plugin
-        echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
 
-    - name: Get GKE credentials
-      run: |-
-        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE" --project "$PROJECT_ID"
+    - name: Get GKE Credentials
+      uses: 'google-github-actions/get-gke-credentials@v1'
+      with:
+        cluster_name: '${{ env.GKE_CLUSTER }}'
+        location: '${{ env.GKE_ZONE }}'
 
-    - name: Verify kubectl configuration
-      run: |
-        kubectl config view
-        kubectl cluster-info
-    
     - name: Install Helm
       uses: azure/setup-helm@v3
       with:
@@ -56,13 +51,19 @@ jobs:
       run: |
         kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
-    - name: Add Bitnami Helm Repository
+    - name: Check Cluster Resources
       run: |
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo update
+        echo "Checking node capacity..."
+        kubectl describe nodes
+        echo "Checking existing pods..."
+        kubectl get pods -A
 
     - name: Deploy Redis
       run: |
+        echo "Starting Redis deployment..."
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
+        
         helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
           --namespace $NAMESPACE \
           --values ./values.yaml \
@@ -72,9 +73,34 @@ jobs:
           --set replica.replicaCount=1 \
           --set auth.enabled=true \
           --set auth.password=${{ secrets.REDIS_PASSWORD }} \
-          --wait --timeout 10m
+          --set master.resources.requests.cpu=100m \
+          --set master.resources.requests.memory=256Mi \
+          --set master.resources.limits.cpu=200m \
+          --set master.resources.limits.memory=512Mi \
+          --set replica.resources.requests.cpu=100m \
+          --set replica.resources.requests.memory=256Mi \
+          --set replica.resources.limits.cpu=200m \
+          --set replica.resources.limits.memory=512Mi \
+          --set networkPolicy.enabled=false \
+          --debug \
+          --wait \
+          --timeout 15m
 
     - name: Verify Deployment
       run: |
+        echo "Checking pod status..."
         kubectl get pods -n $NAMESPACE
+        echo "Checking services..."
         kubectl get svc -n $NAMESPACE
+        echo "Checking PVC..."
+        kubectl get pvc -n $NAMESPACE
+
+    - name: Debug Info
+      if: failure()
+      run: |
+        echo "Pod Details:"
+        kubectl describe pods -n $NAMESPACE
+        echo "PVC Details:"
+        kubectl describe pvc -n $NAMESPACE
+        echo "Events:"
+        kubectl get events -n $NAMESPACE
