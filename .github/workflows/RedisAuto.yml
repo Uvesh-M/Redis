@@ -109,11 +109,19 @@ jobs:
           --set replica.replicaCount=1 \
           --set auth.enabled=true \
           --set auth.password=${{ secrets.REDIS_PASSWORD }} \
-          --wait --timeout 10m; then
+          --set master.readinessProbe.initialDelaySeconds=30 \
+          --set master.readinessProbe.periodSeconds=10 \
+          --set replica.readinessProbe.initialDelaySeconds=30 \
+          --set replica.readinessProbe.periodSeconds=10 \
+          --set master.livenessProbe.initialDelaySeconds=30 \
+          --set replica.livenessProbe.initialDelaySeconds=30 \
+          --wait --timeout 15m; then
     
           echo "✅ Redis deployment successful!"
         else
-          echo "❌ Redis deployment failed!"
+          echo "❌ Redis deployment failed. Checking pods status..."
+          kubectl get pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
+          kubectl describe pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
           exit 1
         fi
 
