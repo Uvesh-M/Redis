@@ -109,27 +109,56 @@ jobs:
           --set replica.replicaCount=1 \
           --set auth.enabled=true \
           --set auth.password=${{ secrets.REDIS_PASSWORD }} \
+          --set master.service.ports.redis=6379 \
+          --set replica.service.name="redis-replicas" \
+          --set replica.service.ports.redis=6379 \
+          --set master.containerPorts.redis=6379 \
+          --set replica.containerPorts.redis=6379 \
+          --set replica.replicaCount=1 \
+          --set master.livenessProbe.initialDelaySeconds=30 \
+          --set master.livenessProbe.periodSeconds=10 \
           --set master.readinessProbe.initialDelaySeconds=30 \
           --set master.readinessProbe.periodSeconds=10 \
+          --set replica.livenessProbe.initialDelaySeconds=30 \
+          --set replica.livenessProbe.periodSeconds=10 \
           --set replica.readinessProbe.initialDelaySeconds=30 \
           --set replica.readinessProbe.periodSeconds=10 \
-          --set master.livenessProbe.initialDelaySeconds=30 \
-          --set replica.livenessProbe.initialDelaySeconds=30 \
-          --wait --timeout 15m; then
+          --set replica.dnsPolicy=ClusterFirst \
+          --set master.dnsPolicy=ClusterFirst \
+          --set sentinel.enabled=false \
+          --wait --timeout 15m
     
-          echo "✅ Redis deployment successful!"
-        else
-          echo "❌ Redis deployment failed. Checking pods status..."
+        # If deployment fails, get more information
+        if [ $? -ne 0 ]; then
+          echo "❌ Deployment failed. Gathering debugging information..."
+    
+          echo "📊 Pod Status:"
           kubectl get pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
+    
+          echo "\n🔍 Pod Details:"
           kubectl describe pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
+    
+          echo "\n🌐 Services:"
+          kubectl get svc -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
+    
+          echo "\n📝 Events:"
+          kubectl get events -n $NAMESPACE --sort-by='.lastTimestamp'
+    
+          # Check DNS resolution
+          echo "\n🔍 Testing DNS resolution from a test pod:"
+          kubectl run -n $NAMESPACE dns-test --rm -i --tty --image=busybox --restart=Never -- nslookup redis-master-0.redis-headless.redis.svc.cluster.local
+    
           exit 1
         fi
 
-        # Final verification
-        if check_release_exists; then
-          echo "✅ Final verification passed. Redis is running."
+        # Verify the deployment
+        echo "✅ Verifying deployment..."
+        kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=$DEPLOYMENT_NAME -n $NAMESPACE --timeout=5m
+  
+        if [ $? -eq 0 ]; then
+          echo "✅ Redis deployment successful!"
         else
-          echo "❌ Final verification failed. Redis deployment not found."
+          echo "❌ Redis deployment verification failed!"
           exit 1
         fi
   
