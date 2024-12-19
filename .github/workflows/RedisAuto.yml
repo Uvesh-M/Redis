@@ -68,99 +68,62 @@ jobs:
         
     - name: Deploy Redis
       run: |
-        # Function to check if release exists
-        check_release_exists() {
-          helm status $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1
-        }
+        # Create a values file with specific configurations
+        cat > redis-values.yaml <<EOF
+        architecture: replication
+  
+        master:
+          service:
+            type: ClusterIP
+          persistence:
+            storageClass: standard-rwo
+            size: 8Gi
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
 
-        # Function to cleanup existing release
-        cleanup_existing_release() {
-          echo "Existing release found. Starting cleanup..."
-          helm uninstall $DEPLOYMENT_NAME -n $NAMESPACE
+        replica:
+          replicaCount: 1
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
 
-          local retries=30
-          local wait_time=10
-    
-          for ((i=1; i<=retries; i++)); do
-            if ! check_release_exists; then
-              echo "✅ Existing release successfully uninstalled."
-              return 0
-            fi
-            echo "⏳ Waiting for release uninstallation (Attempt $i of $retries)..."
-            sleep $wait_time
-          done
+        auth:
+          enabled: true
+          password: "${{ secrets.REDIS_PASSWORD }}"
 
-          echo "❌ Failed to uninstall existing release within timeout."
-          return 1
-        }
-
-        # Main deployment logic
-        if check_release_exists; then
-          cleanup_existing_release || exit 1
-        fi
+        commonConfiguration: |-
+        # Enable AOF https://redis.io/topics/persistence#append-only-file
+        appendonly yes
+        # Disable RDB persistence
+        save ""
+        EOF
 
         echo "📦 Installing/Upgrading Redis..."
-        if helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
+        helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
           --namespace $NAMESPACE \
-          --values ./values.yaml \
-          --set master.service.type=ClusterIP \
-          --set master.persistence.storageClass=standard-rwo \
-          --set master.persistence.size=8Gi \
-          --set replica.replicaCount=1 \
-          --set auth.enabled=true \
-          --set auth.password=${{ secrets.REDIS_PASSWORD }} \
-          --set master.service.ports.redis=6379 \
-          --set replica.service.name="redis-replicas" \
-          --set replica.service.ports.redis=6379 \
-          --set master.containerPorts.redis=6379 \
-          --set replica.containerPorts.redis=6379 \
-          --set replica.replicaCount=1 \
-          --set master.livenessProbe.initialDelaySeconds=30 \
-          --set master.livenessProbe.periodSeconds=10 \
-          --set master.readinessProbe.initialDelaySeconds=30 \
-          --set master.readinessProbe.periodSeconds=10 \
-          --set replica.livenessProbe.initialDelaySeconds=30 \
-          --set replica.livenessProbe.periodSeconds=10 \
-          --set replica.readinessProbe.initialDelaySeconds=30 \
-          --set replica.readinessProbe.periodSeconds=10 \
-          --set replica.dnsPolicy=ClusterFirst \
-          --set master.dnsPolicy=ClusterFirst \
-          --set sentinel.enabled=false \
+          --values redis-values.yaml \
           --wait --timeout 15m
-    
-        # If deployment fails, get more information
-        if [ $? -ne 0 ]; then
-          echo "❌ Deployment failed. Gathering debugging information..."
-    
-          echo "📊 Pod Status:"
-          kubectl get pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
-    
-          echo "\n🔍 Pod Details:"
-          kubectl describe pods -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
-    
-          echo "\n🌐 Services:"
-          kubectl get svc -n $NAMESPACE -l app.kubernetes.io/instance=$DEPLOYMENT_NAME
-    
-          echo "\n📝 Events:"
-          kubectl get events -n $NAMESPACE --sort-by='.lastTimestamp'
-    
-          # Check DNS resolution
-          echo "\n🔍 Testing DNS resolution from a test pod:"
-          kubectl run -n $NAMESPACE dns-test --rm -i --tty --image=busybox --restart=Never -- nslookup redis-master-0.redis-headless.redis.svc.cluster.local
-    
-          exit 1
-        fi
 
-        # Verify the deployment
-        echo "✅ Verifying deployment..."
-        kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=$DEPLOYMENT_NAME -n $NAMESPACE --timeout=5m
-  
-        if [ $? -eq 0 ]; then
-          echo "✅ Redis deployment successful!"
-        else
-          echo "❌ Redis deployment verification failed!"
-          exit 1
-        fi
+  # Add verification and debugging as in the previous exampl
   
     - name: Verify Deployment
       run: |
