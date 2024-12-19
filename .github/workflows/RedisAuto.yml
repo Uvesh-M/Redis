@@ -52,13 +52,6 @@ jobs:
         echo "Checking existing pods..."
         kubectl get pods -A
         
-    - name: Check Existing Deployments
-      run: |
-        if helm status $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1; then
-          helm uninstall $DEPLOYMENT_NAME -n $NAMESPACE
-          sleep 10
-        fi
-        
     - name: Install Helm
       uses: azure/setup-helm@v3
       with:
@@ -75,7 +68,39 @@ jobs:
         
     - name: Deploy Redis
       run: |
-        helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
+        # Function to check if release exists
+        check_release_exists() {
+          helm status $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1
+        }
+
+        # Function to cleanup existing release
+        cleanup_existing_release() {
+          echo "Existing release found. Starting cleanup..."
+          helm uninstall $DEPLOYMENT_NAME -n $NAMESPACE
+
+          local retries=30
+          local wait_time=10
+    
+          for ((i=1; i<=retries; i++)); do
+            if ! check_release_exists; then
+              echo "✅ Existing release successfully uninstalled."
+              return 0
+            fi
+            echo "⏳ Waiting for release uninstallation (Attempt $i of $retries)..."
+            sleep $wait_time
+          done
+
+          echo "❌ Failed to uninstall existing release within timeout."
+          return 1
+        }
+
+        # Main deployment logic
+        if check_release_exists; then
+          cleanup_existing_release || exit 1
+        fi
+
+        echo "📦 Installing/Upgrading Redis..."
+        if helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
           --namespace $NAMESPACE \
           --values ./values.yaml \
           --set master.service.type=ClusterIP \
@@ -84,7 +109,22 @@ jobs:
           --set replica.replicaCount=1 \
           --set auth.enabled=true \
           --set auth.password=${{ secrets.REDIS_PASSWORD }} \
-          --wait --timeout 10m
+          --wait --timeout 10m; then
+    
+          echo "✅ Redis deployment successful!"
+        else
+          echo "❌ Redis deployment failed!"
+          exit 1
+        fi
+
+        # Final verification
+        if check_release_exists; then
+          echo "✅ Final verification passed. Redis is running."
+        else
+          echo "❌ Final verification failed. Redis deployment not found."
+          exit 1
+        fi
+  
     - name: Verify Deployment
       run: |
         kubectl get pods -n $NAMESPACE
