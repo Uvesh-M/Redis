@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to (e.g., staging, production)'
+        description: 'Environment to deploy to (staging/production)'
         required: true
         default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   setup:
@@ -15,9 +19,9 @@ jobs:
 
   deploy:
     needs: setup
-    name: Deploy to ${{ github.event.inputs.environment }}
+    name: Deploy
     runs-on: ubuntu-22.04
-    environment: ${{ github.event.inputs.environment }}  # Use the selected environment
+    environment: ${{ github.event.inputs.environment }}
     
     steps:
     - name: Checkout
@@ -26,13 +30,13 @@ jobs:
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
 
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
-        project_id: ${{ vars.PROJECT_ID }}  # Access env var from the selected environment
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ vars.PROJECT_ID }}
 
     - name: Install gke-gcloud-auth-plugin
       run: |
@@ -41,7 +45,7 @@ jobs:
 
     - name: Get GKE credentials
       run: |
-        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE" --project "$PROJECT_ID"
+        gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
 
     - name: Add Bitnami Helm repo
       run: |
@@ -50,7 +54,7 @@ jobs:
 
     - name: Deploy RabbitMQ
       run: |
-        helm upgrade --install rabbitmq bitnami/rabbitmq -f $VALUE_PATH
+        helm upgrade --install rabbitmq bitnami/rabbitmq -f rabbitMQ/values.yaml
 
     - name: Wait for RabbitMQ pod to be ready
       run: |
