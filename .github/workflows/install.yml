@@ -7,7 +7,7 @@ jobs:
   install:
     name: Install and Setup
     runs-on: ubuntu-22.04
-    environment: ${{ inputs.environment }}  # Use the selected environment or default to 'staging'
+    environment: ${{ inputs.environment || 'staging' }}  # Use the selected environment or default to 'staging'
     
     steps:
     - name: Checkout
@@ -19,7 +19,16 @@ jobs:
         echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
         echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
         echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
-        
+        echo "GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' ? '*****' : 'NOT SET' }}"
+
+    - name: Verify GitHub Environment
+      run: |
+        echo "GitHub Environment: ${{ github.event.inputs.environment || 'staging' }}"
+        echo "GitHub Environment Variables:"
+        echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
+        echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
+        echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
+
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
