@@ -81,5 +81,5 @@ jobs:
 
     - name: Verify Deployment
       run: |
-        kubectl get pods -n ${{ env.NAMESPACE }}
-        kubectl get svc -n ${{ env.NAMESPACE }}
+        kubectl get pods -n ${{ vars.NAMESPACE }}
+        kubectl get svc -n ${{ vars.NAMESPACE }}
