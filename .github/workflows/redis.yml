@@ -1,4 +1,4 @@
-name: Deploy Redis to GKE 
+name: Deploy Redis to GKE
 
 on:
   workflow_dispatch:
@@ -23,31 +23,41 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    environment: ${{ github.event.inputs.environment }}
+    environment: ${{ github.event.inputs.environment }}  # Use the selected environment
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
+    - name: Debug Environment Variables and Secrets
+      run: |
+        echo "Selected Environment: ${{ github.event.inputs.environment }}"
+        echo "PROJECT_ID: ${{ vars.PROJECT_ID }}"
+        echo "GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}"
+        echo "GKE_ZONE: ${{ vars.GKE_ZONE }}"
+        echo "NAMESPACE: ${{ vars.NAMESPACE }}"
+        echo "DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}"
+
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
 
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ vars.PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
+        project_id: ${{ vars.PROJECT_ID }}  # Access env var from the selected environment
 
     - name: Install gke-gcloud-auth-plugin
       run: |
         gcloud components install gke-gcloud-auth-plugin
         echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
-        
+
     - name: Get GKE credentials
-      run: |-
-        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE" --project "$PROJECT_ID"
+      run: |
+        echo "Running: gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} --zone ${{ vars.GKE_ZONE }} --project ${{ vars.PROJECT_ID }}"
+        gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
 
     - name: Verify kubectl configuration
       run: |
@@ -56,21 +66,20 @@ jobs:
 
     - name: Create Namespace
       run: |
-        kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-        
+        kubectl create namespace ${{ vars.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
     - name: Add Bitnami Helm Repository
       run: |
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
-        
+
     - name: Deploy Redis
       run: |
-        helm upgrade --install $DEPLOYMENT_NAME bitnami/redis \
-          --namespace $NAMESPACE \
-          --values ./redis/values.yaml \
-          
-          
+        helm upgrade --install ${{ vars.DEPLOYMENT_NAME }} bitnami/redis \
+          --namespace ${{ vars.NAMESPACE }} \
+          --values ./redis/values.yaml
+
     - name: Verify Deployment
       run: |
-        kubectl get pods -n $NAMESPACE
-        kubectl get svc -n $NAMESPACE
+        kubectl get pods -n ${{ env.NAMESPACE }}
+        kubectl get svc -n ${{ env.NAMESPACE }}
