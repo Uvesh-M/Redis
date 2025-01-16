@@ -3,28 +3,10 @@ name: Deploy RabbitMQ to GKE
 on:
   workflow_dispatch:
     inputs:
-      project_id:
-        description: 'GCP Project ID'
+      environment:
+        description: 'Environment to deploy to (e.g., staging, production)'
         required: true
-        default: 'bo-stage'
-      gke_cluster:
-        description: 'GKE Cluster Name'
-        required: true
-        default: 'autopilot-bo-cluster'
-      gke_zone:
-        description: 'GKE Zone'
-        required: true
-        default: 'asia-south1'
-      value_path:
-        description: 'Path to values.yaml'
-        required: true
-        default: 'rabbitMQ/values.yaml'
-
-env:
-  PROJECT_ID: ${{ github.event.inputs.project_id || env.PROJECT_ID || 'bo-stage' }}
-  GKE_CLUSTER: ${{ github.event.inputs.gke_cluster || env.GKE_CLUSTER || 'autopilot-bo-cluster' }}
-  GKE_ZONE: ${{ github.event.inputs.gke_zone || env.GKE_ZONE || 'asia-south1' }}
-  VALUE_PATH: ${{ github.event.inputs.value_path || env.VALUE_PATH || 'rabbitMQ/values.yaml' }}
+        default: 'staging'
 
 jobs:
   setup:
@@ -33,8 +15,9 @@ jobs:
 
   deploy:
     needs: setup
-    name: Deploy
+    name: Deploy to ${{ github.event.inputs.environment }}
     runs-on: ubuntu-22.04
+    environment: ${{ github.event.inputs.environment }}  # Use the selected environment
     
     steps:
     - name: Checkout
@@ -43,13 +26,13 @@ jobs:
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
 
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
+        project_id: ${{ env.PROJECT_ID }}  # Access env var from the selected environment
 
     - name: Install gke-gcloud-auth-plugin
       run: |
