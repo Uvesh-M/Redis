@@ -3,15 +3,11 @@ name: Install and Setup
 on:
   workflow_call:
 
-env:
-  PROJECT_ID: bo-stage
-  GKE_CLUSTER: autopilot-bo-cluster
-  GKE_ZONE: asia-south1
-
 jobs:
   install:
     name: Install and Setup
     runs-on: ubuntu-22.04
+    environment: ${{ inputs.environment || 'staging' }}  # Use the selected environment or default to 'staging'
     
     steps:
     - name: Checkout
@@ -20,14 +16,14 @@ jobs:
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
 
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
-        
+        service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
+        project_id: ${{ env.PROJECT_ID }}  # Access env var from the selected environment
+
     - name: Install gke-gcloud-auth-plugin
       run: |
         gcloud components install gke-gcloud-auth-plugin
