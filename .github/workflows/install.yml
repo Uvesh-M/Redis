@@ -16,9 +16,9 @@ jobs:
     - name: Debug Environment Variables and Secrets
       run: |
         echo "Selected Environment: ${{ inputs.environment || 'staging' }}"
-        echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
-        echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
-        echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
+        echo "PROJECT_ID: ${{ vars.PROJECT_ID }}"
+        echo "GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}"
+        echo "GKE_ZONE: ${{ vars.GKE_ZONE }}"
 
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
@@ -29,7 +29,7 @@ jobs:
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
         service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
-        project_id: ${{ env.PROJECT_ID }}  # Access env var from the selected environment
+        project_id: ${{ vars.PROJECT_ID }}  # Access env var from the selected environment
 
     - name: Install gke-gcloud-auth-plugin
       run: |
@@ -38,8 +38,8 @@ jobs:
 
     - name: Get GKE credentials
       run: |
-        echo "Running: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }} --project ${{ env.PROJECT_ID }}"
-        gcloud container clusters get-credentials "${{ env.GKE_CLUSTER }}" --zone "${{ env.GKE_ZONE }}" --project "${{ env.PROJECT_ID }}"
+        echo "Running: gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} --zone ${{vars.GKE_ZONE }} --project ${{ vars.PROJECT_ID }}"
+        gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
 
     - name: Verify kubectl configuration
       run: |
