@@ -2,12 +2,29 @@ name: Deploy RabbitMQ to GKE
 
 on:
   workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'GCP Project ID'
+        required: true
+        default: 'bo-stage'
+      gke_cluster:
+        description: 'GKE Cluster Name'
+        required: true
+        default: 'autopilot-bo-cluster'
+      gke_zone:
+        description: 'GKE Zone'
+        required: true
+        default: 'asia-south1'
+      value_path:
+        description: 'Path to values.yaml'
+        required: true
+        default: 'rabbitMQ/values.yaml'
 
 env:
-  PROJECT_ID: bo-stage
-  GKE_CLUSTER: autopilot-bo-cluster
-  GKE_ZONE: asia-south1
-  VALUE_PATH: rabbitMQ/values.yaml
+  PROJECT_ID: ${{ github.event.inputs.project_id || env.PROJECT_ID || 'bo-stage' }}
+  GKE_CLUSTER: ${{ github.event.inputs.gke_cluster || env.GKE_CLUSTER || 'autopilot-bo-cluster' }}
+  GKE_ZONE: ${{ github.event.inputs.gke_zone || env.GKE_ZONE || 'asia-south1' }}
+  VALUE_PATH: ${{ github.event.inputs.value_path || env.VALUE_PATH || 'rabbitMQ/values.yaml' }}
 
 jobs:
   setup:
