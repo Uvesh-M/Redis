@@ -32,7 +32,7 @@ jobs:
       uses: google-github-actions/setup-gcloud@v2.1.2
       with:
         service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
-        project_id: ${{ env.PROJECT_ID }}  # Access env var from the selected environment
+        project_id: ${{ vars.PROJECT_ID }}  # Access env var from the selected environment
 
     - name: Install gke-gcloud-auth-plugin
       run: |
