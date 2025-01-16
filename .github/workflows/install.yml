@@ -19,7 +19,6 @@ jobs:
         echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
         echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
         echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
-        echo "GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' ? '*****' : 'NOT SET' }}"
 
     - name: Verify GitHub Environment
       run: |
