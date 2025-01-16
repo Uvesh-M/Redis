@@ -1,0 +1,40 @@
+name: Deploy Django HPA 
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    uses: ./.github/workflows/install.yml
+    secrets: inherit
+    
+  deploy:
+    needs: setup
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up GCP authentication
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2.1.2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: bo-stage
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials autopilot-bo-cluster --region asia-south1 --project bo-stage
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+
+      - name: Deploy Django HPA
+        run: |
+          helm upgrade --install django-hpa ./autoscalling
