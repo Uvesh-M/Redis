@@ -13,17 +13,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Debug Environment Variables
+    - name: Debug Environment Variables and Secrets
       run: |
         echo "Selected Environment: ${{ inputs.environment || 'staging' }}"
-        echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
-        echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
-        echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
-
-    - name: Verify GitHub Environment
-      run: |
-        echo "GitHub Environment: ${{ github.event.inputs.environment || 'staging' }}"
-        echo "GitHub Environment Variables:"
         echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
         echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
         echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
@@ -46,6 +38,7 @@ jobs:
 
     - name: Get GKE credentials
       run: |
+        echo "Running: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }} --project ${{ env.PROJECT_ID }}"
         gcloud container clusters get-credentials "${{ env.GKE_CLUSTER }}" --zone "${{ env.GKE_ZONE }}" --project "${{ env.PROJECT_ID }}"
 
     - name: Verify kubectl configuration
