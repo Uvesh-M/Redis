@@ -7,7 +7,7 @@ jobs:
   install:
     name: Install and Setup
     runs-on: ubuntu-22.04
-    environment: ${{ inputs.environment || 'staging' }}  # Use the selected environment or default to 'staging'
+    environment: ${{ inputs.environment }}  # Use the selected environment or default to 'staging'
     
     steps:
     - name: Checkout
