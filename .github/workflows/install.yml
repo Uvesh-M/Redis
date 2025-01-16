@@ -19,8 +19,7 @@ jobs:
         echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
         echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
         echo "GKE_ZONE: ${{ env.GKE_ZONE }}"
-        echo "GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' ? '*****' : 'NOT SET' }}"
-
+        
     - name: Set up GCP authentication
       uses: google-github-actions/auth@v1
       with:
