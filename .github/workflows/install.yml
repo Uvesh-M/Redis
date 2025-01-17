@@ -11,6 +11,13 @@ on:
         options:
           - staging
           - production
+          
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy to (staging/production)"
+        required: true
+        type: string
 
 jobs:
   install:
