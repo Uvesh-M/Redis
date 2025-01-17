@@ -19,13 +19,15 @@ on:
         required: true
         type: string
 
+# Default permissions for all jobs
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   install:
     name: Install and Setup
     runs-on: ubuntu-22.04
-    permissions:
-      contents: "read"
-      id-token: "write"
     environment: ${{ github.event.inputs.environment }}
 
     steps:
