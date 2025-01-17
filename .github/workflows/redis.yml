@@ -12,23 +12,22 @@ on:
           - staging
           - production
 
+# Default permissions for all jobs
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   setup:
     uses: ./.github/workflows/install.yml
     with:
-      environment: ${{ inputs.environment }}  # or ${{ vars.ENVIRONMENT }}
-    permissions:
-      contents: read
-      id-token: write
+      environment: ${{ inputs.environment }}
     secrets: inherit
     
   deploy:
     needs: setup
     runs-on: ubuntu-22.04
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    environment: ${{ github.event.inputs.environment }}  # Use the selected environment
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
     - name: Checkout Repository
