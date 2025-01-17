@@ -21,9 +21,6 @@ on:
         required: true
         type: string
         default: "fearture/docker-gcp-support"
-        
-# Default environment for all jobs
-
 
 # Default permissions for all jobs
 permissions:
