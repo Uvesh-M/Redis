@@ -27,14 +27,16 @@ on:
           - rabbitmq
           - redis
 
+# Default permissions for all jobs
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   setup:
     uses: ./.github/workflows/install.yml
     with:
-      environment: ${{ inputs.environment }}  # or ${{ vars.ENVIRONMENT }}
-    permissions:
-      contents: read
-      id-token: write
+      environment: ${{ inputs.environment }}
     secrets: inherit
 
   rollback:
