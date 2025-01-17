@@ -1,0 +1,19 @@
+global:
+  environment: staging
+
+configMap:
+  name: better-backend-app-config
+
+streamer:
+  appName: better-backend-app-streamer
+  image:
+    repository: asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
+    tag: latest
+  replicas: 1
+  resources:
+    requests:
+      cpu: 2
+      memory: 4Gi 
+    limits:
+      cpu: 3
+      memory: 6Gi

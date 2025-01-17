@@ -1,0 +1,99 @@
+name: Deploy Backend Application and Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'Select the Google Cloud Project'
+        required: true
+        type: string
+        default: bo-stage
+        options:
+          - bo-stage
+          - bo-prod
+          - bo-dev
+      region:
+        description: 'Select the Region'
+        required: true
+        type: string
+        default: asia-south1
+        options:
+          - asia-south1
+          - us-central1
+          - europe-west1
+      artifact_repo:
+        description: 'Select the Artifact Repository'
+        required: true
+        type: string
+        default: bo-backend-django
+        options:
+          - bo-backend-django
+          - bo-backend-node
+          - bo-backend-go
+
+env:
+  IMAGE_NAME: backend-application
+
+jobs:
+  setup:
+    uses: ./.github/workflows/install.yml
+    secrets: inherit
+
+  deploy:
+    needs: setup
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up GCP authentication
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2.1.2
+        with:
+          project_id: ${{ inputs.project_id }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.artifact_repo }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker tag ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.artifact_repo }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.artifact_repo }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Push Docker Image to Artifact Registry
+        run: |
+          docker push ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.artifact_repo }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.artifact_repo }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials autopilot-bo-cluster --region ${{ inputs.region }} --project ${{ inputs.project_id }}
+
+      - name: Deploy Helm Chart
+        id: deploy
+        run: |
+          helm upgrade --install backend-application ./application --set image.tag=${{ github.sha }} || echo "::set-output name=deploy_failed::true"
+
+      - name: Rollback if deployment failed
+        if: steps.deploy.outputs.deploy_failed == 'true'
+        run: |
+          LAST_REVISION=$(helm history backend-application -o json | jq -r '.[] | select(.status == "deployed") | .revision' | sort -rn | head -n 1)
+          if [ -n "$LAST_REVISION" ]; then
+            echo "Rolling back to revision $LAST_REVISION"
+            helm rollback backend-application $LAST_REVISION
+          else
+            echo "No previous successful revision found. Unable to rollback."
+            exit 1
+          fi

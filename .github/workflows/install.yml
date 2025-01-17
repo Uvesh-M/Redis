@@ -1,55 +1,66 @@
 name: Install and Setup
 
 on:
-  workflow_call:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to (staging/production)"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   install:
     name: Install and Setup
     runs-on: ubuntu-22.04
-    environment: ${{ inputs.environment || 'staging' }}  # Use the selected environment or default to 'staging'
-    
+    permissions:
+      contents: "read"
+      id-token: "write"
+    environment: ${{ github.event.inputs.environment }}
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Debug Environment Variables and Secrets
-      run: |
-        echo "Selected Environment: ${{ inputs.environment || 'staging' }}"
-        echo "PROJECT_ID: ${{ vars.PROJECT_ID }}"
-        echo "GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}"
-        echo "GKE_ZONE: ${{ vars.GKE_ZONE }}"
+      - name: Debug Environment Variables and Secrets
+        run: |
+          echo "Selected Environment: ${{ github.event.inputs.environment }}"
+          echo "PROJECT_ID: ${{ vars.PROJECT_ID }}"
+          echo "GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}"
+          echo "GKE_ZONE: ${{ vars.GKE_ZONE }}"
 
-    - name: Set up GCP authentication
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
+      - name: Set up GCP authentication
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    - name: Setup Google Cloud CLI
-      uses: google-github-actions/setup-gcloud@v2.1.2
-      with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}  # Access secret from the selected environment
-        project_id: ${{ vars.PROJECT_ID }}  # Access env var from the selected environment
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2.1.2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ vars.PROJECT_ID }}
 
-    - name: Install gke-gcloud-auth-plugin
-      run: |
-        gcloud components install gke-gcloud-auth-plugin
-        echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+          echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
 
-    - name: Get GKE credentials
-      run: |
-        echo "Running: gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} --zone ${{vars.GKE_ZONE }} --project ${{ vars.PROJECT_ID }}"
-        gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
 
-    - name: Verify kubectl configuration
-      run: |
-        kubectl config view
-        kubectl cluster-info
+      - name: Verify kubectl configuration
+        run: |
+          kubectl config view
+          kubectl cluster-info
 
-    - name: Install Helm
-      run: |
-        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
-    - name: Verify Helm installation
-      run: |
-        helm version
+      - name: Verify Helm installation
+        run: |
+          helm version
