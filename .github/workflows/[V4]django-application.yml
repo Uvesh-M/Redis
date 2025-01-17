@@ -45,6 +45,7 @@ jobs:
     needs: setup
     name: Deploy
     runs-on: ubuntu-22.04
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout code
