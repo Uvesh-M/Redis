@@ -15,7 +15,7 @@ on:
 jobs:
   uninstall:
     runs-on: ubuntu-22.04
-    environment: ${{ github.event.inputs.environment }}  # Use the selected environment
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout code
