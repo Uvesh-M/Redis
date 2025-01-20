@@ -7,7 +7,10 @@ configMap:
 sockets:
   appName: better-backend-app-sockets
   image:
-    repository: asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
+    repository: asia-south1-docker.pkg.dev/bo-prod-445611/bo-main/02-01-2025_16-22-52 #For Production
+    
+                #Below is for Staging
+                #asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
     tag: latest
   replicas: 1
   resources:
