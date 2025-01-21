@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Values.configMap.name }}"
+  name: {{ .Values.configMap.name }}
 data:
   ALL_SUB_CATEGORY_TAB_IMAGE_URL : "https://better-how-to-play.s3.ap-south-1.amazonaws.com/unselect_all.png"
   ALLOWED_HOSTS : '["*"]'
-  DB_HOST : "10.250.128.10"
-  DB_NAME : "better_opinions_integration_db"
+  DB_HOST : "172.30.0.9"
+  DB_NAME : "better_opinions_prod_db"
   DB_PASSWORD : "better_app_admin"
   DB_PORT : "5432"
   DB_USER : "better_app_admin"
@@ -17,11 +17,11 @@ data:
   RABBITMQ_PORT : "5672"
   RABBITMQ_USER : "admin"
   RABBITMQ_PASSWORD : "STs3gz0RCpIiOka"
-  READ_1_DB_HOST : "10.250.128.10"
-  READ_2_DB_HOST : "10.250.128.10"
-  READ_3_DB_HOST : "10.250.128.10"
-  READ_4_DB_HOST : "10.250.128.10"
-  READ_DB_NAME : "better_opinions_integration_db"
+  READ_1_DB_HOST : "172.30.0.9"
+  READ_2_DB_HOST : "172.30.0.9"
+  READ_3_DB_HOST : "172.30.0.9"
+  READ_4_DB_HOST : "172.30.0.9"
+  READ_DB_NAME : "better_opinions_prod_db"
   READ_DB_PASSWORD : "better_app_admin"
   READ_DB_PORT : "5432"
   READ_DB_USER : "better_app_admin"
@@ -36,9 +36,9 @@ data:
   POLL_SETTLEMENT_SQS_URL : "https://sqs.ap-south-1.amazonaws.com/490263886323/poll_expiry_settlement_queue.fifo"
   YOUTUBE_API_KEY : "AIzaSyDcRIYYRVZXXaLCXD_HaHaE_peOW_kfJp4"
   SPARK_CLUSTER_ID : "j-D4QIABT4WNPG"
-  LEADERBOARD_SPARK_SCRIPT_PATH_S3 : "gs://emr-cluster-bo/scripts/fantasy11_leaderboard.py"
+  LEADERBOARD_SPARK_SCRIPT_PATH_S3 : "gs://bo-tube11-emr/script/fantasy11_leaderboard.py"
   MONGO_CONNECTION_URI : "mongodb+srv://better_app_admin:better_app_admin@betteropinions-prod-db.83jsb.mongodb.net/?retryWrites=true&w=majority"
-  SPARK_JARS : "gs://emr-cluster-bo/jars/spark-redis_2.12-3.1.0-SNAPSHOT-jar-with-dependencies.jar"
+  SPARK_JARS : "gs://bo-tube11-emr/jars/spark-redis_2.12-3.1.0-SNAPSHOT-jar-with-dependencies.jar"
   SPARK_PACKAGES : "org.mongodb.spark:mongo-spark-connector_2.12:10.1.1"
   SPOT_BALL_QUESTION_IMAGE_URL_FORMAT : "https://api.integration-betteropinions.com/spotball/{value}"
   NO_OF_ANALYTICS_EVENTS_QUEUES : "1"
@@ -70,7 +70,7 @@ data:
   NO_OF_GST_INVOICE_WORKERS : "1"
   NO_OF_MYTEAM11_SETTLEMENT_WORKERS : "0"
   NO_OF_MIXPANEL_ANALYTICS_EVENTS_QUEUES : "1"
-  SERVER_ENVIRONMENT : "staging"
+  SERVER_ENVIRONMENT : "production"
   BLACKLISTED_STATES_IP : '[]'
   BLACKLISTED_STATES_SIGNUP : '[]'
-  FANTASY11_LEADERBOARD_SPARK_SCRIPT_PATH_S3 : "gs://emr-cluster-bo/scripts/fantasy11_leaderboard.py"
+  FANTASY11_LEADERBOARD_SPARK_SCRIPT_PATH_S3 : "gs://bo-tube11-emr/script/fantasy11_leaderboard.py"
