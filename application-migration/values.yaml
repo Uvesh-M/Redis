@@ -7,7 +7,7 @@ configMap:
 migration:
   appName: better-backend-app-migration
   image:
-    repository: asia-south1-docker.pkg.dev/bo-prod-445611/bo-main/django-backend #For Production
+    repository: asia-south1-docker.pkg.dev/bo-prod-445611/bo-main/django-backend:20250121-40 #For Production
     
                 #Below is for Staging
                 #asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
