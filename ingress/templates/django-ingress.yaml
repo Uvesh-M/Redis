@@ -5,7 +5,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "gce-ingress-static-ip"
-    networking.gke.io/managed-certificates: "gce-openssl-cert"
+    networking.gke.io/managed-certificates: "gce-cert-test"
     ingress.gcp.kubernetes.io/ssl-redirect: "true"
     cloud.google.com/load-balancer-neg-ready: "true"
 spec:
