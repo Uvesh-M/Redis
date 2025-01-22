@@ -184,7 +184,7 @@ jobs:
                 FAILED=true
               fi
             else
-              echo "${SERVICE} not deployed"
+              echo "${SERVICE} deployed"
             fi
           done
 
