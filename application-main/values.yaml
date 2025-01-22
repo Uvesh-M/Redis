@@ -6,7 +6,7 @@ configMap:
 
 django:
   appName: better-backend-app-django
-  host: api-v2.integration-betteropinions.com
+  host: api.prod-betteropinions.com
   image:
     repository: asia-south1-docker.pkg.dev/bo-prod-445611/bo-main/django-backend #For Production
     
