@@ -4,4 +4,4 @@ metadata:
   name: gce-cert-test
 spec:
   domains:
-    - api-v2.integration-betteropinions.com
+    - api.prod-betteropinions.com
