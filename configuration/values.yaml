@@ -6,4 +6,4 @@ configMap:
 
 django:
   appName: better-backend-app-django
-  host: api-v2.integration-betteropinions.com
+  host: api.prod-betteropinions.com
