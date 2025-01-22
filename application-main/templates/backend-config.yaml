@@ -3,10 +3,10 @@ kind: BackendConfig
 metadata:
   name: django-backend-config
 spec:
-  healthCheck:
-    checkIntervalSec: 15
-    timeoutSec: 5 
-    healthyThreshold: 1
-    unhealthyThreshold: 5
-    type: HTTP
-    requestPath: /health/
+  # healthCheck:
+  #   checkIntervalSec: 15
+  #   timeoutSec: 5 
+  #   healthyThreshold: 1
+  #   unhealthyThreshold: 5
+  #   type: HTTP
+  #   requestPath: /health/
