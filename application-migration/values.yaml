@@ -11,7 +11,7 @@ migration:
     
                 #Below is for Staging
                 #asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
-    tag: latest
+    tag: 20250123-44
   replicas: 1
   resources:
     requests:
