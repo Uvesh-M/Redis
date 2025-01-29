@@ -41,10 +41,10 @@ jobs:
           echo "GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}"
           echo "GKE_ZONE: ${{ vars.GKE_ZONE }}"
 
-      # - name: Set up GCP authentication
-      #   uses: google-github-actions/auth@v1
-      #   with:
-      #     credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up GCP authentication
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.2
