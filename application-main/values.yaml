@@ -1,5 +1,7 @@
 global:
-  environment: staging
+  environment: {{ .Values.global.environment | default "production" }}
+  project_id: {{ .Values.global.project_id }}
+  region: asia-south1
 
 configMap:
   name: better-backend-app-config
