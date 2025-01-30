@@ -15,8 +15,8 @@ streamer:
   replicas: 1
   resources:
     requests:
-      cpu: ${{ vars.REQUESTS_CPU }}
-      memory: ${{ vars.REQUESTS_MEMORY }}
+      cpu: ${{ secrets.REQUESTS_CPU }}
+      memory: ${{ secrets.REQUESTS_MEMORY }}
     limits:
-      cpu: ${{ vars.LIMITS_CPU }}
-      memory: ${{ vars.LIMITS_MEMORY }}
+      cpu: ${{ secrets.LIMITS_CPU }}
+      memory: ${{ secrets.LIMITS_MEMORY }}
