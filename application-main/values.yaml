@@ -1,5 +1,7 @@
 global:
   environment: staging
+  project_id: bo-stage
+  region: asia-south1
 
 configMap:
   name: better-backend-app-config
@@ -15,7 +17,7 @@ django:
     tag: 20250123-44
   replicas: 1
 
-environments:
+specs:
   staging:
     resources:
       requests:
