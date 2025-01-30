@@ -1,7 +1,7 @@
 global:
-  environment: {{ .Values.global.environment | default "production" }}
-  project_id: {{ .Values.global.project_id }}
-  region: asia-south1
+  environment: "production"  
+  project_id: "bo-prod-445611" 
+  region: "asia-south1"
 
 configMap:
   name: better-backend-app-config
