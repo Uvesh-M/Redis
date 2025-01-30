@@ -66,4 +66,4 @@ jobs:
           
       - name: Deploy Ingress
         run: |
-          helm upgrade --install django-ingress ./ingress --set host=${{ vars.HOST_NAME }}
+          helm upgrade --install django-ingress ./ingress --set HOSTNAME=${{ vars.HOST_NAME }}
