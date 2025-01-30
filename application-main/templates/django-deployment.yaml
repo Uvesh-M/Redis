@@ -23,12 +23,11 @@ spec:
             - configMapRef:
                 name: {{ .Values.configMap.name }}
           resources:
-            requests:
-              memory: {{ .Values.specs.resources.requests.memory }}
-              cpu: {{ .Values.specs.resources.requests.cpu }}
-            limits:
-              memory: {{ .Values.specs.resources.limits.memory }}
-              cpu: {{ .Values.specs.resources.limits.cpu }}
+            {{- if eq .Values.global.environment "production" }}
+            {{- toYaml .Values.specs.production.resources | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.specs.staging.resources | nindent 12 }}
+            {{- end }}
           # livenessProbe:
           #   httpGet:
           #       path: /health/
