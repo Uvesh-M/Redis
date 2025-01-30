@@ -1,1 +1,82 @@
+name: Trigger and Monitor Client Workflow
 
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      branch_name:
+        required: true
+        type: string
+    secrets:
+      TRIGGER_REPO_PAT:
+        required: true
+
+jobs:
+  trigger-and-monitor:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Trigger Client Workflow
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.TRIGGER_REPO_PAT }}
+          script: |
+            const response = await github.rest.actions.createWorkflowDispatch({
+              owner: 'code-owner-betteropinions',
+              repo: 'BetterOpinions-BE-Django',
+              workflow_id: 'build_push_gcp.yml',  
+              ref: '${{ inputs.branch_name }}',  
+              inputs: {
+                run_id: '${{ github.run_id }}',
+                environment: '${{ inputs.environment }}'
+              }
+            });
+            core.info('Triggered client workflow: build_push_gcp.yml on branch ${{ inputs.branch_name }}');
+
+      - name: Wait for Client Workflow Success
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.TRIGGER_REPO_PAT }}
+          script: |
+            const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            const maxAttempts = 30;  
+            const interval = 60 * 1000; 
+            let attempts = 0;
+            let success = false;
+
+            while (attempts < maxAttempts) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: 'code-owner-betteropinions',
+                repo: 'BetterOpinions-BE-Django',
+                workflow_id: 'build_push_gcp.yml',
+                branch: '${{ inputs.branch_name }}',
+                status: 'completed',
+                per_page: 5
+              });
+
+              const recentRuns = runs.data.workflow_runs;
+              const targetRun = recentRuns.find(run => 
+                run.status === 'completed' && 
+                new Date(run.created_at) > new Date(Date.now() - 10 * 60 * 1000)
+              );
+
+              if (targetRun) {
+                if (targetRun.conclusion === 'success') {
+                  success = true;
+                  core.info(`Client workflow succeeded. Run ID: ${targetRun.id}`);
+                  break;
+                } else {
+                  core.setFailed(`Client workflow completed but failed. Run ID: ${targetRun.id}`);
+                  break;
+                }
+              }
+
+              core.info(`Waiting for client workflow to complete... Attempt ${attempts + 1}`);
+              await wait(interval);
+              attempts++;
+            }
+
+            if (!success) {
+              core.setFailed('Client workflow did not complete successfully or timed out.');
+            }
