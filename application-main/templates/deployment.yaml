@@ -16,33 +16,31 @@ spec:
     spec:
       containers:
         - name: {{ .Values.django.appName }}
-          image: {{ .Values.django.image.repository }}:{{ .Values.django.image.tag }}
+          image: {{ .Values.global.region }}-docker.pkg.dev/{{ .Values.global.project_id }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
                 name: {{ .Values.configMap.name }}
           resources:
-    {{- if eq .Values.global.environment "staging" }}
-    {{ toYaml .Values.environments.staging.resources | indent 12 }}
-    {{- else if eq .Values.global.environment "production" }}
-    {{ toYaml .Values.environments.production.resources | indent 12 }}
-    {{- else }}
-    {{ toYaml .Values.environments.staging.resources | indent 12 }}  # Default to staging if environment is not specified
-    {{- end }}
-          # livenessProbe:
-          #   httpGet:
-          #       path: /health/
-          #       port: 8000
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 15
-          #   failureThreshold: 5
-          #   successThreshold: 1
-          # readinessProbe:
-          #   httpGet:
-          #       path: /health/
-          #       port: 8000
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 15
-          #   failureThreshold: 5
-          #   successThreshold: 1
+            {{- if eq .Values.global.environment "production" }}
+            {{- toYaml .Values.django.resources.production | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.django.resources.staging | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+                path: /health/
+                port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 5
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+                path: /health/
+                port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 5
+            successThreshold: 1
