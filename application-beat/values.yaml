@@ -13,21 +13,10 @@ beat:
                 #asia-south1-docker.pkg.dev/bo-stage/bo-main/2024-11-01-new
     tag: 20250123-44
   replicas: 1
-# Define resources for different environments
-environments:
-  staging:
-    resources:
-      requests:
-        cpu: 2
-        memory: 4Gi
-      limits:
-        cpu: 3
-        memory: 6Gi
-  production:
-    resources:
-      requests:
-        cpu: 4
-        memory: 8Gi
-      limits:
-        cpu: 6
-        memory: 12Gi
+  resources:
+    requests:
+      cpu: {{ .Values.REQUESTS_CPU }}
+      memory: {{ .Values.REQUESTS_MEMORY }}
+    limits:
+      cpu: {{ .Values.LIMITS_CPU }}
+      memory: {{ .Values.LIMITS_MEMORY }}
