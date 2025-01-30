@@ -10,7 +10,7 @@ metadata:
     cloud.google.com/load-balancer-neg-ready: "true"
 spec:
   rules:
-  - host: {{ .Values.django.host }}
+  - host: {{ if eq .Values.global.environment "production" }}{{ .Values.django.productionHost }}{{ else }}{{ .Values.django.stagingHost }}{{ end }}
     http:
       paths:
       - path: /
