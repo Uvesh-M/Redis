@@ -3,4 +3,5 @@ global:
 
 django:
   appName: better-backend-app-django
-  host: api.prod-betteropinions.com
+  productionHost: api.prod-betteropinions.com
+  stagingHost: api.staging-betteropinions.com
