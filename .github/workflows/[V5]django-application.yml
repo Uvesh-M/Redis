@@ -1,0 +1,193 @@
+name: A Backend Application and Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to (staging/production)"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      services_order:
+        description: "Specify services to deploy (comma-separated)"
+        required: false
+        type: string
+        default: "main,migration,beat,sockets,streamer"
+      branch_name:
+        description: "Branch to run the workflow on"
+        required: true
+        type: string
+        default: "fearture/docker-gcp-support"
+
+# Default permissions for all jobs
+permissions:
+  contents: read
+  id-token: write
+  
+env:
+  IMAGE_NAME: backend-application
+
+jobs:
+  setup:
+    uses: ./.github/workflows/install.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+    
+
+  deploy:
+    needs: setup
+    name: Deploy
+    runs-on: ubuntu-22.04
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up GCP authentication
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}  # Service account key
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2.1.2
+        with:
+          project_id: ${{ vars.PROJECT_ID }}
+
+      # - name: Trigger Client Workflow
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.TRIGGER_REPO_PAT }}
+      #     script: |
+      #       const response = await github.rest.actions.createWorkflowDispatch({
+      #         owner: 'code-owner-betteropinions',
+      #         repo: 'BetterOpinions-BE-Django',
+      #         workflow_id: 'build_push_gcp.yml',  
+      #         ref: '${{ inputs.branch_name }}',  
+      #         inputs: {
+      #           run_id: '${{ github.run_id }}',
+      #           environment: '${{ inputs.environment }}'
+      #         }
+      #       });
+      #       core.info('Triggered client workflow: build_push_gcp.yml on branch ${{ inputs.branch_name }}');
+
+      # - name: Wait for Client Workflow Success
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.TRIGGER_REPO_PAT }}
+      #     script: |
+      #       const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      #       const maxAttempts = 30;  
+      #       const interval = 60 * 1000; 
+      #       let attempts = 0;
+      #       let success = false;
+
+      #       while (attempts < maxAttempts) {
+      #         const runs = await github.rest.actions.listWorkflowRuns({
+      #           owner: 'code-owner-betteropinions',
+      #           repo: 'BetterOpinions-BE-Django',
+      #           workflow_id: 'build_push_gcp.yml',
+      #           branch: '${{ inputs.branch_name }}',
+      #           status: 'completed',
+      #           per_page: 5
+      #         });
+
+      #         const recentRuns = runs.data.workflow_runs;
+      #         const targetRun = recentRuns.find(run => 
+      #           run.status === 'completed' && 
+      #           new Date(run.created_at) > new Date(Date.now() - 10 * 60 * 1000)
+      #         );
+
+      #         if (targetRun) {
+      #           if (targetRun.conclusion === 'success') {
+      #             success = true;
+      #             core.info(`Client workflow succeeded. Run ID: ${targetRun.id}`);
+      #             break;
+      #           } else {
+      #             core.setFailed(`Client workflow completed but failed. Run ID: ${targetRun.id}`);
+      #             break;
+      #           }
+      #         }
+
+      #         core.info(`Waiting for client workflow to complete... Attempt ${attempts + 1}`);
+      #         await wait(interval);
+      #         attempts++;
+      #       }
+
+      #       if (!success) {
+      #         core.setFailed('Client workflow did not complete successfully or timed out.');
+      #       }
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials "${{ vars.GKE_CLUSTER }}" --zone "${{ vars.GKE_ZONE }}" --project "${{ vars.PROJECT_ID }}"
+
+      - name: Verify kubectl configuration
+        run: |
+          kubectl config view
+          kubectl cluster-info
+
+      - name: Deploy Services
+        id: deploy-services
+        run: |
+          IFS=',' read -ra SERVICES <<< "${{ inputs.services_order }}"
+
+          for SERVICE in "${SERVICES[@]}"; do
+            SERVICE=$(echo $SERVICE | tr -d ' ')
+            if [ -d "application-${SERVICE}" ]; then
+              echo "Deploying application-${SERVICE}"
+              
+              RELEASE_NAME="backend-${SERVICE}"
+              if [ "$SERVICE" = "main" ]; then
+                RELEASE_NAME="backend-application"
+              fi
+              
+              if ! helm upgrade --install "${RELEASE_NAME}" "./application-${SERVICE}" --set --set global.environment=${{ inputs.environment }},global.project_id=${{ vars.PROJECT_ID }},image.tag=${{ github.sha }}; then
+                echo "Deployment failed for ${SERVICE}"
+                
+                LAST_REVISION=$(helm history "${RELEASE_NAME}" -o json | jq -r '.[] | select(.status == "deployed") | .revision' | sort -rn | head -n 1)
+                if [ -n "$LAST_REVISION" ]; then
+                  echo "Rolling back ${RELEASE_NAME} to revision $LAST_REVISION"
+                  helm rollback "${RELEASE_NAME}" $LAST_REVISION
+                fi
+                
+                echo "::error::Failed to deploy ${SERVICE}"
+                continue
+              fi
+              
+              echo "Successfully deployed ${SERVICE}"
+            else
+              echo "Warning: Directory application-${SERVICE} not found, skipping..."
+            fi
+          done
+
+      - name: Deployment Status
+        run: |
+          IFS=',' read -ra SERVICES <<< "${{ inputs.services_order }}"
+          FAILED=false
+
+          for SERVICE in "${SERVICES[@]}"; do
+            SERVICE=$(echo $SERVICE | tr -d ' ')
+            if helm status "backend-${SERVICE}" &>/dev/null; then
+              STATUS=$(helm status "backend-${SERVICE}" -o json | jq -r '.info.status')
+              echo "${SERVICE} Status: $STATUS"
+              if [ "$STATUS" != "deployed" ]; then
+                FAILED=true
+              fi
+            else
+              echo "${SERVICE} deployed"
+            fi
+          done
+
+          if [ "$FAILED" = true ]; then
+            echo "One or more deployments failed"
+            exit 1
+          fi
