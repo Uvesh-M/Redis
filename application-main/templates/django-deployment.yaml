@@ -24,11 +24,11 @@ spec:
                 name: {{ .Values.configMap.name }}
           resources:
             requests:
-              memory: {{ .Values.django.resources.requests.memory }}
-              cpu: {{ .Values.django.resources.requests.cpu }}
+              memory: {{ .Values.specs.resources.requests.memory }}
+              cpu: {{ .Values.specs.resources.requests.cpu }}
             limits:
-              memory: {{ .Values.django.resources.limits.memory }}
-              cpu: {{ .Values.django.resources.limits.cpu }}
+              memory: {{ .Values.specs.resources.limits.memory }}
+              cpu: {{ .Values.specs.resources.limits.cpu }}
           # livenessProbe:
           #   httpGet:
           #       path: /health/
