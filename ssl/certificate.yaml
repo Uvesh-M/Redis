@@ -4,4 +4,4 @@ metadata:
   name: gce-cert-test
 spec:
   domains:
-    - HOSTNAME_PLACEHOLDER #api.prod-betteropinions.com
+    - api.prod-betteropinions.com
