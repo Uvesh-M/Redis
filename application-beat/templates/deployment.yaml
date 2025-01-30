@@ -22,11 +22,8 @@ spec:
             - configMapRef:
                 name: {{ .Values.configMap.name }}
           resources:
-             resources:
-{{- if eq .Values.global.environment "staging" }}
-{{ toYaml .Values.environments.staging.resources | indent 12 }}
-{{- else if eq .Values.global.environment "production" }}
-{{ toYaml .Values.environments.production.resources | indent 12 }}
-{{- else }}
-{{ toYaml .Values.environments.staging.resources | indent 12 }}  # Default to staging if environment is not specified
-{{- end }}
+            {{- if eq .Values.global.environment "production" }}
+            {{- toYaml .Values.specs.resources.production | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.specs.resources.staging | nindent 12 }}
+            {{- end }}
