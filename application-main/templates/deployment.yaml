@@ -23,12 +23,13 @@ spec:
             - configMapRef:
                 name: {{ .Values.configMap.name }}
           resources:
-            requests:
-              memory: {{ .Values.django.resources.requests.memory }}
-              cpu: {{ .Values.django.resources.requests.cpu }}
-            limits:
-              memory: {{ .Values.django.resources.limits.memory }}
-              cpu: {{ .Values.django.resources.limits.cpu }}
+    {{- if eq .Values.global.environment "staging" }}
+    {{ toYaml .Values.environments.staging.resources | indent 12 }}
+    {{- else if eq .Values.global.environment "production" }}
+    {{ toYaml .Values.environments.production.resources | indent 12 }}
+    {{- else }}
+    {{ toYaml .Values.environments.staging.resources | indent 12 }}  # Default to staging if environment is not specified
+    {{- end }}
           # livenessProbe:
           #   httpGet:
           #       path: /health/
