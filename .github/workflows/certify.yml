@@ -62,4 +62,4 @@ jobs:
           
       - name: Deploy Ingress
         run: |
-          helm upgrade --install django-ingress ./ingress 
+          helm upgrade --install django-ingress ./ingress --set global.environment=${{ inputs.environment }}
