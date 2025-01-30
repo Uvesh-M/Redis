@@ -1,7 +1,5 @@
 global:
   environment: staging
-  project_id: bo-stage
-  region: asia-south1
 
 configMap:
   name: better-backend-app-config
