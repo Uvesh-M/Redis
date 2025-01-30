@@ -22,9 +22,11 @@ spec:
             - configMapRef:
                 name: {{ .Values.configMap.name }}
           resources:
-            requests:
-              memory: {{ .Values.beat.resources.requests.memory }}
-              cpu: {{ .Values.beat.resources.requests.cpu }}
-            limits:
-              memory: {{ .Values.beat.resources.limits.memory }}
-              cpu: {{ .Values.beat.resources.limits.cpu }}
+             resources:
+{{- if eq .Values.global.environment "staging" }}
+{{ toYaml .Values.environments.staging.resources | indent 12 }}
+{{- else if eq .Values.global.environment "production" }}
+{{ toYaml .Values.environments.production.resources | indent 12 }}
+{{- else }}
+{{ toYaml .Values.environments.staging.resources | indent 12 }}  # Default to staging if environment is not specified
+{{- end }}
