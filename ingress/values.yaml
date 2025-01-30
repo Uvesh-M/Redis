@@ -3,4 +3,4 @@ global:
 
 django:
   appName: better-backend-app-django
-  host: {{ .Values.HOST_NAME }} #api.prod-betteropinions.com
+  host: ${{ vars.HOST_NAME }} #api.prod-betteropinions.com
