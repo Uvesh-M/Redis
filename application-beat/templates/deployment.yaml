@@ -23,7 +23,7 @@ spec:
                 name: {{ .Values.configMap.name }}
           resources:
             {{- if eq .Values.global.environment "production" }}
-            {{- toYaml .Values.specs.resources.production | nindent 12 }}
+            {{- toYaml .Values.specs.production.resources | nindent 12 }}
             {{- else }}
-            {{- toYaml .Values.specs.resources.staging | nindent 12 }}
+            {{- toYaml .Values.specs.staging.resources | nindent 12 }}
             {{- end }}
