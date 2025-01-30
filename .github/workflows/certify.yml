@@ -56,14 +56,10 @@ jobs:
         run: |
           gcloud compute addresses create gce-ingress-static-ip --global || true
 
-      - name: Prepare Certificate File
-        run: |
-          sed -i "s/HOSTNAME_PLACEHOLDER/${{ vars.HOST_NAME }}/g" ./ssl/certificate.yaml
-          
       - name: Create ManagedCertificate
         run: |
           kubectl apply -f ./ssl/certificate.yaml
           
       - name: Deploy Ingress
         run: |
-          helm upgrade --install django-ingress ./ingress --set HOSTNAME=${{ vars.HOST_NAME }}
+          helm upgrade --install django-ingress ./ingress 
