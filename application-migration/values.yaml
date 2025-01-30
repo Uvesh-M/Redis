@@ -15,8 +15,8 @@ migration:
   replicas: 1
   resources:
     requests:
-      cpu: 2
-      memory: 4Gi 
+      cpu: {{ .Values.REQUESTS_CPU }}
+      memory: {{ .Values.REQUESTS_MEMORY }}
     limits:
-      cpu: 3
-      memory: 6Gi
+      cpu: {{ .Values.LIMITS_CPU }}
+      memory: {{ .Values.LIMITS_MEMORY }}
