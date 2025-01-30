@@ -4,4 +4,4 @@ metadata:
   name: gce-cert-test
 spec:
   domains:
-    - {{ .Values.HOST_NAME }} #api.prod-betteropinions.com
+    - ${{ vars.HOST_NAME }} #api.prod-betteropinions.com
