@@ -60,7 +60,7 @@ jobs:
 
 
       - name: Trigger Client Build
-        uses: ./.github/workflows/trigger.yml
+        uses: ./.github/workflows/trigger_workflow.yml
         with:
           environment: ${{ inputs.environment }}
           branch_name: ${{ inputs.branch_name }}
