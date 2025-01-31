@@ -14,6 +14,7 @@
 ## @param global.redis.password Global Redis&reg; password (overrides `auth.password`)
 ##
 global:
+  environment: staging
   imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:
@@ -282,13 +283,24 @@ master:
   resourcesPreset: "nano"
   ## @param master.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## Example:
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
+  param:
+    staging:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+    production:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+
 
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
