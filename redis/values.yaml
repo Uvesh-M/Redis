@@ -14,7 +14,6 @@
 ## @param global.redis.password Global Redis&reg; password (overrides `auth.password`)
 ##
 global:
-  environment: staging
   imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:
@@ -169,7 +168,6 @@ existingConfigmap: ""
 ## @section Redis&reg; master configuration parameters
 ##
 master:
-  resources: {}
   ## @param master.count Number of Redis&reg; master instances to deploy (experimental, requires additional configuration)
   ##
   count: 1
@@ -284,24 +282,13 @@ master:
   resourcesPreset: "nano"
   ## @param master.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## Example:
-  param:
-    staging:
-      resources:
-        requests:
-          cpu: 500m
-          memory: 512Mi
-        limits:
-          cpu: 1
-          memory: 1Gi
-    production:
-      resources:
-        requests:
-          cpu: 500m
-          memory: 512Mi
-        limits:
-          cpu: 1
-          memory: 1Gi
-
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
 
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -651,7 +638,6 @@ master:
 ## @section Redis&reg; replicas configuration parameters
 ##
 replica:
-  resources: {}
   ## @param replica.kind Use either DaemonSet or StatefulSet (default)
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
   ##
@@ -778,13 +764,13 @@ replica:
   resourcesPreset: "nano"
   ## @param replica.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## Example:
-  # resources:
-  #   requests:
-  #     cpu: 500m
-  #     memory: 512Mi
-  #   limits:
-  #     cpu: 1
-  #     memory: 1Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
 
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
