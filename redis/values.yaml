@@ -13,25 +13,45 @@
 ## @param global.storageClass DEPRECATED: use global.defaultStorageClass instead
 ## @param global.redis.password Global Redis&reg; password (overrides `auth.password`)
 ##
-master:
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
+environments:
+  staging:
+    master:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+    replica:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
 
-replica:
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
+  production:
+    master:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+    replica:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Gi
+        limits:
+          cpu: 1
+          memory: 1Gi
+
 global:
-  environment: staging
+  environment: staging   # default environment
   imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:
@@ -186,7 +206,13 @@ existingConfigmap: ""
 ## @section Redis&reg; master configuration parameters
 ##
 master:
-  resources: {}
+  resourcesPreset: null
+  resources: 
+    {{- if eq .Values.global.environment "production" }}
+    {{- toYaml .Values.environments.production.master.resources | nindent 4 }}
+    {{- else }}
+    {{- toYaml .Values.environments.staging.master.resources | nindent 4 }}
+    {{- end }}
   ## @param master.count Number of Redis&reg; master instances to deploy (experimental, requires additional configuration)
   ##
   count: 1
@@ -651,7 +677,13 @@ master:
 ## @section Redis&reg; replicas configuration parameters
 ##
 replica:
-  resources: {}
+  resourcesPreset: null
+  resources:
+    {{- if eq .Values.global.environment "production" }}
+    {{- toYaml .Values.environments.production.replica.resources | nindent 4 }}
+    {{- else }}
+    {{- toYaml .Values.environments.staging.replica.resources | nindent 4 }}
+    {{- end }}
   ## @param replica.kind Use either DaemonSet or StatefulSet (default)
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
   ##
