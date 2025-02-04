@@ -79,9 +79,9 @@ jobs:
 
     - name: Deploy Redis
       run: |
-        helm upgrade --install ${{ vars.DEPLOYMENT_NAME }} bitnami/redis \
-          --namespace ${{ vars.NAMESPACE }} \
-          --values ./redis/values-${{ github.event.inputs.environment }}.yaml
+       helm upgrade --install ${{ vars.DEPLOYMENT_NAME }} bitnami/redis \
+       --namespace ${{ vars.NAMESPACE }} \
+       --values ./redis/values-${{ github.event.inputs.environment }}.yaml
 
     - name: Verify Deployment
       run: |
