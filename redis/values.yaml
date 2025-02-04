@@ -209,9 +209,19 @@ master:
   resourcesPreset: null
   resources: 
     {{- if eq .Values.global.environment "production" }}
-    {{- toYaml .Values.environments.production.master.resources | nindent 4 }}
+    requests:
+      cpu: {{ .Values.environments.production.master.resources.requests.cpu }}
+      memory: {{ .Values.environments.production.master.resources.requests.memory }}
+    limits:
+      cpu: {{ .Values.environments.production.master.resources.limits.cpu }}
+      memory: {{ .Values.environments.production.master.resources.limits.memory }}
     {{- else }}
-    {{- toYaml .Values.environments.staging.master.resources | nindent 4 }}
+    requests:
+      cpu: {{ .Values.environments.staging.master.resources.requests.cpu }}
+      memory: {{ .Values.environments.staging.master.resources.requests.memory }}
+    limits:
+      cpu: {{ .Values.environments.staging.master.resources.limits.cpu }}
+      memory: {{ .Values.environments.staging.master.resources.limits.memory }}
     {{- end }}
   ## @param master.count Number of Redis&reg; master instances to deploy (experimental, requires additional configuration)
   ##
@@ -680,9 +690,19 @@ replica:
   resourcesPreset: null
   resources:
     {{- if eq .Values.global.environment "production" }}
-    {{- toYaml .Values.environments.production.replica.resources | nindent 4 }}
+    requests:
+      cpu: {{ .Values.environments.production.replica.resources.requests.cpu }}
+      memory: {{ .Values.environments.production.replica.resources.requests.memory }}
+    limits:
+      cpu: {{ .Values.environments.production.replica.resources.limits.cpu }}
+      memory: {{ .Values.environments.production.replica.resources.limits.memory }}
     {{- else }}
-    {{- toYaml .Values.environments.staging.replica.resources | nindent 4 }}
+    requests:
+      cpu: {{ .Values.environments.staging.replica.resources.requests.cpu }}
+      memory: {{ .Values.environments.staging.replica.resources.requests.memory }}
+    limits:
+      cpu: {{ .Values.environments.staging.replica.resources.limits.cpu }}
+      memory: {{ .Values.environments.staging.replica.resources.limits.memory }}
     {{- end }}
   ## @param replica.kind Use either DaemonSet or StatefulSet (default)
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
